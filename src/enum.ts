@@ -16,4 +16,10 @@ export enum INNER_MESSAGE_TYPE {
 
   USER_DISABLE_CONFIG = 'user_disable_config',
   USER_DISABLE_CONFIG_RESULT = 'user_disable_config_result',
+
+  POPUP_ADD_CONFIG = 'popup_add_config',
+  POPUP_DELETE_CONFIG = 'popup_delete_config',
+  POPUP_UPDATE_CONFIG = 'popup_update_config',
+  POPUP_ENABLE_CONFIG = 'popup_enable_config',
+  POPUP_DISABLE_CONFIG = 'popup_disable_config',
 }

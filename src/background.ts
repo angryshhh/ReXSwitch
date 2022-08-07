@@ -1,9 +1,9 @@
 import MessageSender = chrome.runtime.MessageSender;
+import Rule = chrome.declarativeNetRequest.Rule;
+import RuleActionType = chrome.declarativeNetRequest.RuleActionType;
 import { Config, InnerMessage } from './type';
 import { EXTENSION_MODULE, EXTENSION_NAME, INNER_MESSAGE_TYPE } from './enum';
 import { getInnerMessage } from './utils';
-import Rule = chrome.declarativeNetRequest.Rule;
-import RuleActionType = chrome.declarativeNetRequest.RuleActionType;
 
 const getRulesFromConfig = (config: Config): Rule[] => {
   const { redirectRules = [], headersRules = [] } = config;
@@ -72,6 +72,31 @@ const addConfig = (config: Config) => {
   });
 };
 
+const deleteConfig = (configName: string) => {
+  chrome.storage.sync.get(['configs'], (result) => {
+    const { configs = {} } = result;
+    if (configs[configName]) {
+      delete configs[configName];
+    }
+    chrome.storage.sync.set({ configs });
+  });
+};
+
+const updateConfig = (config: Config) => {
+  chrome.storage.sync.get(['configs'], (result) => {
+    const { configs = {} } = result;
+    configs[config.name] = config;
+
+    chrome.storage.sync.set({ configs }).then(() => {
+      chrome.storage.sync.get(['currentConfigName'], ({ currentConfigName }) => {
+        if (currentConfigName === config.name) {
+          enableConfig(config.name);
+        }
+      });
+    });
+  });
+};
+
 const moduleMessageListener = (
   message: InnerMessage,
   sender: MessageSender,
@@ -111,6 +136,20 @@ const moduleMessageListener = (
           { success: true },
         ),
       );
+    } else if (type === INNER_MESSAGE_TYPE.POPUP_ADD_CONFIG) {
+      const { config } = content;
+      addConfig(config);
+    } else if (type === INNER_MESSAGE_TYPE.POPUP_DELETE_CONFIG) {
+      const { configName } = content;
+      deleteConfig(configName);
+    } else if (type === INNER_MESSAGE_TYPE.POPUP_UPDATE_CONFIG) {
+      const { config } = content;
+      updateConfig(config);
+    } else if (type === INNER_MESSAGE_TYPE.POPUP_ENABLE_CONFIG) {
+      const { configName } = content;
+      enableConfig(configName);
+    } else if (type === INNER_MESSAGE_TYPE.POPUP_DISABLE_CONFIG) {
+      disableConfig();
     }
   }
 };
@@ -124,7 +163,6 @@ chrome.runtime.onMessage.addListener(moduleMessageListener);
 // });
 
 chrome.declarativeNetRequest.onRuleMatchedDebug.addListener((info) => {
-  console.log(
-    `ruleSet ${info.rule.rulesetId} id ${info.rule.ruleId} rule matched url ${info.request.url} type ${info.request.type}`,
-  );
+  console.log('request captured');
+  console.log(info);
 });

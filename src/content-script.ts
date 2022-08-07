@@ -13,8 +13,6 @@ const THIS_MODULE_NAME = EXTENSION_MODULE.CONTENT_SCRIPT;
 })();
 
 const backgroundResponseHandler = (message: InnerMessage) => {
-  console.log('content get response');
-  console.log(message);
   if (message[EXTENSION_NAME] && message.target === THIS_MODULE_NAME) {
     const { type, content } = message;
     if (
