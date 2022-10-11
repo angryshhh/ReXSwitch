@@ -6,7 +6,7 @@ module.exports = [
   {
     context: __dirname,
     target: 'web',
-    devtool: "source-map",
+    // devtool: "source-map",
     entry: {
       popup: path.resolve(__dirname, 'src/popup/main.tsx'),
     },
@@ -21,7 +21,9 @@ module.exports = [
     },
 
     plugins: [new NodePolyfillPlugin()],
-
+    optimization: {
+      minimize: false,
+    },
     module: {
       rules: [
         {
@@ -42,7 +44,7 @@ module.exports = [
   {
     context: __dirname,
     target: 'web',
-    devtool: "source-map",
+    // devtool: "source-map",
     entry: {
       enum: path.resolve(__dirname, 'src/type.ts'),
       type: path.resolve(__dirname, 'src/type.ts'),
@@ -57,6 +59,9 @@ module.exports = [
     },
     resolve: {
       extensions: ['.js', '.jsx', '.ts', '.tsx'],
+    },
+    optimization: {
+      minimize: false,
     },
     module: {
       rules: [

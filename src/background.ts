@@ -162,7 +162,7 @@ chrome.runtime.onMessage.addListener(moduleMessageListener);
 //   });
 // });
 
-chrome.declarativeNetRequest.onRuleMatchedDebug.addListener((info) => {
-  console.log('request captured');
-  console.log(info);
-});
+// chrome.declarativeNetRequest.onRuleMatchedDebug.addListener((info) => {
+//   console.log('request captured');
+//   console.log(info);
+// });

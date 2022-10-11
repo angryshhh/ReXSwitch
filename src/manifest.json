@@ -1,11 +1,10 @@
 {
   "name": "ReXSwitch",
-  "version": "0.0.2",
+  "version": "1.0.0",
   "manifest_version": 3,
   "homepage_url": "https://github.com/angryshhh/ReXSwitch",
   "permissions": [
     "declarativeNetRequestWithHostAccess",
-    "declarativeNetRequestFeedback",
     "storage"
   ],
   "host_permissions": ["<all_urls>"],

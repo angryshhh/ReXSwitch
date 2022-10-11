@@ -8,8 +8,6 @@ import { Config, Configs } from '../type';
 import 'antd/dist/antd.css';
 import './index.css';
 import { getInnerMessage } from '../utils';
-import StorageChange = chrome.storage.StorageChange;
-import AreaName = chrome.storage.AreaName;
 import HeaderOperation = chrome.declarativeNetRequest.HeaderOperation;
 
 const THIS_MODULE_NAME = EXTENSION_MODULE.POPUP;
@@ -64,7 +62,7 @@ const RulesContainer = styled.div`
   gap: 8px;
 `;
 
-const updateConfig = (nextConfig: Config) => {
+const updateConfigInMemory = (nextConfig: Config) => {
   chrome.runtime.sendMessage(
     getThisModuleMessage(INNER_MESSAGE_TYPE.POPUP_UPDATE_CONFIG, {
       config: nextConfig,
@@ -82,6 +80,14 @@ const App = () => {
   const [configNameModalVisible, setConfigNameModalVisible] = useState(false);
   const [configNameModalValue, setConfigNameModalValue] = useState('');
 
+  const [filterValue, setFilterValue] = useState('');
+
+  const updateConfig = (nextConfig: Config) => {
+    configs[nextConfig.name] = nextConfig;
+    setConfigs({ ...configs });
+    updateConfigInMemory(nextConfig);
+  };
+
   const setData = useLatestCallback((result: { [p: string]: any }) => {
     const { configs = {}, currentConfigName = '' } = result;
     setConfigs(configs);
@@ -91,33 +97,26 @@ const App = () => {
     }
   });
 
-  const storageChangedListener = useLatestCallback(
-    (changes: { [p: string]: StorageChange }, areaName: AreaName) => {
-      if (areaName === 'sync') {
-        chrome.storage.sync.get(['configs', 'currentConfigName']).then(setData);
-      }
-    },
-  );
-
   useEffect(() => {
     chrome.storage.sync.get(['configs', 'currentConfigName']).then(setData);
-
-    chrome.storage.onChanged.addListener(storageChangedListener);
-    return () => {
-      chrome.storage.onChanged.removeListener(storageChangedListener);
-    };
   }, []);
 
   return (
     <PopupContainer>
       <div className="left-part">
-        <Input placeholder="过滤" />
+        <Input
+          placeholder="过滤"
+          value={filterValue}
+          onChange={(event) => setFilterValue(event.target.value)}
+        />
         <Menu
           style={{ flexGrow: 1, overflowY: 'auto', border: 0 }}
-          items={Object.values(configs).map(({ name }) => ({
-            label: name === currentConfigName ? `🏃${name}` : name,
-            key: name,
-          }))}
+          items={Object.values(configs)
+            .filter(({ name }) => name.includes(filterValue))
+            .map(({ name }) => ({
+              label: name === currentConfigName ? `🏃${name}` : name,
+              key: name,
+            }))}
           selectedKeys={[selectedConfigName]}
           onSelect={({ key }) => setSelectedConfigName(key)}
         />
@@ -146,6 +145,7 @@ const App = () => {
                   chrome.runtime.sendMessage(
                     getThisModuleMessage(INNER_MESSAGE_TYPE.POPUP_DISABLE_CONFIG),
                   );
+                  setCurrentConfigName('');
                 }}
               >
                 停用配置
@@ -160,6 +160,7 @@ const App = () => {
                         configName: selectedConfigName,
                       }),
                     );
+                    setCurrentConfigName(selectedConfigName);
                   }}
                 >
                   启用配置
@@ -172,6 +173,10 @@ const App = () => {
                         configName: selectedConfigName,
                       }),
                     );
+                    const nextConfigs = { ...configs };
+                    delete nextConfigs[selectedConfigName];
+                    setConfigs(nextConfigs);
+                    setSelectedConfigName('');
                   }}
                 >
                   删除配置
@@ -311,7 +316,7 @@ const App = () => {
                         onClick={() => {
                           selectedConfig.headersRules[headersRuleIndex].requestHeaders = [
                             ...selectedConfig.headersRules[headersRuleIndex].requestHeaders,
-                            { operation: HeaderOperation.APPEND, header: '', value: '' },
+                            { operation: HeaderOperation.SET, header: '', value: '' },
                           ];
                           updateConfig(selectedConfig);
                         }}
@@ -347,9 +352,7 @@ const App = () => {
                       ...(selectedConfig.headersRules ?? []),
                       {
                         targetUrl: '',
-                        requestHeaders: [
-                          { operation: HeaderOperation.APPEND, header: '', value: '' },
-                        ],
+                        requestHeaders: [{ operation: HeaderOperation.SET, header: '', value: '' }],
                       },
                     ];
                     updateConfig(selectedConfig);
@@ -371,11 +374,11 @@ const App = () => {
             if (configs[configNameModalValue]) {
               Message.error('配置名已存在');
             } else {
+              const config = { name: configNameModalValue };
               chrome.runtime.sendMessage(
-                getThisModuleMessage(INNER_MESSAGE_TYPE.POPUP_ADD_CONFIG, {
-                  config: { name: configNameModalValue },
-                }),
+                getThisModuleMessage(INNER_MESSAGE_TYPE.POPUP_ADD_CONFIG, { config }),
               );
+              updateConfig(config);
             }
           }
           setConfigNameModalVisible(false);

@@ -7,33 +7,9 @@ const THIS_MODULE_NAME = EXTENSION_MODULE.INJECT_SCRIPT;
 const getThisModuleMessage = (type: INNER_MESSAGE_TYPE, content: any) =>
   getInnerMessage(THIS_MODULE_NAME, EXTENSION_MODULE.CONTENT_SCRIPT, type, content);
 
-const testConfig: Config = {
-  name: 'addTest',
-  redirectRules: [
-    {
-      targetUrl:
-        'https://(?:dev\\.)?g\\.alicdn\\.com/wdk-frontend-release/rex-pdca/(?:.+)/pages/(.*)/index\\.js.*',
-      redirectUrl: 'http://127.0.0.1:15018/\\1/index.js',
-    },
-    {
-      targetUrl: 'https://(?:pre-)?portalpro\\.hemaos\\.com/(.*)\\.hot-update\\.(json|js)',
-      redirectUrl: 'http://127.0.0.1:15018/\\1.hot-update.\\2',
-    },
-  ],
-  headersRules: [
-    {
-      targetUrl: '(.*)',
-      requestHeaders: [
-        // @ts-ignore
-        { header: 'test-modify-header', operation: 'set', value: 'testModifyHeader' },
-      ],
-    },
-  ],
-};
-
 // @ts-ignore
 window.ReXSwitch = {
-  addConfig: (config: Config = testConfig) => {
+  addConfig: (config: Config) => {
     window.postMessage(
       getThisModuleMessage(INNER_MESSAGE_TYPE.USER_ADD_CONFIG, { config }),
       '*',
